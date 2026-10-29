@@ -1,0 +1,34 @@
+Queried: {'query': {'and': [{'operation': 'IN', 'field_name': 'region_code', 'field_values': ['US']}, {'operation': 'EQ', 'field_name': 'keyword', 'field_values': ['education']}]}, 'start_date': '20261001', 'end_date': '20261007', 'max_count': 10}
+Pages: 2
+Rows returned: 20
+Unique videos: 20
+Duplicates removed: 0
+
+Missingness (%)
+id                   0.0
+video_description    0.0
+voice_to_text        0.0
+create_time          0.0
+region_code          0.0
+username             0.0
+view_count           0.0
+like_count           0.0
+comment_count        0.0
+share_count          0.0
+hashtag_names        0.0
+video_duration       0.0
+
+Text coverage (%)
+video_description: 100.0%
+voice_to_text: 0.0%
+
+Engagement summary
+       view_count  like_count  comment_count  share_count
+count    20.00000   20.000000      20.000000     20.00000
+mean    665.40000   26.350000       2.450000      2.70000
+std    1353.20016   57.603248       4.616618      9.65783
+min       0.00000    0.000000       0.000000      0.00000
+25%      90.75000    0.000000       0.000000      0.00000
+50%     159.50000    4.000000       0.500000      0.00000
+75%     580.50000   16.250000       2.000000      0.00000
+max    4777.00000  204.000000      18.000000     43.00000

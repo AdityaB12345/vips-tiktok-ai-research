@@ -1,0 +1,23 @@
+# Credentials and local environment
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Research data
+data/raw/
+data/processed/
+data/**/*.csv
+data/**/*.json
+
+# Logs and local tooling
+logs/
+*.log
+.vscode/
+.idea/
+.ipynb_checkpoints/
+.DS_Store
+Thumbs.db
