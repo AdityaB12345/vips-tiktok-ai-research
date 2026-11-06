@@ -1,104 +1,145 @@
 # TikTok Engagement Research
 
-Research project investigating how a retrieval-augmented AI agent can revise social media text for different engagement goals while preserving the original content's meaning and important claims.
+Research project investigating how a retrieval-augmented AI agent can augment **spoken TikTok video scripts** for three distinct engagement goals—likes, comments, and shares—while preserving the original content's meaning and important claims.
 
-## Project overview
+**Research question:** How do model-predicted engagement gains and content-fidelity costs differ across like, comment, and share goals when TikTok text is augmented by a RAG-based AI agent, compared with unchanged originals and fixed-prompt LLM rewrites?
 
-The study focuses on three distinct engagement goals: **likes, comments, and shares**. A single AI agent will use historical TikTok examples retrieved from a vector database to decide how to augment a source post. Its outputs will be compared with the **unchanged original** and a **fixed-prompt, non-agent LLM rewrite**.
+**Current stage (November 2026):** Data collection and preliminary caption-data auditing completed. **Video acquisition/transcript feasibility is being tested; no transcript-based training dataset or engagement predictors have been completed.** The experiment depends on obtaining a sufficiently large, permitted, usable transcript dataset.
 
-The evaluation will consider two outcomes separately:
+## Study design
 
-- **Predicted engagement:** Three supervised models will estimate likes, comments, and shares from text features and available post/account context.
-- **Content fidelity:** Measures will examine whether revisions preserve central claims, meaning, and stance/intent, and whether they introduce contradictions or unsupported factual additions.
+1. Collect historical TikTok video metadata and observed views, likes, comments, shares, timestamps, and creator identifiers using the authorized TikTok Research API.
+2. Obtain permitted video/audio or existing transcripts for matching video IDs, transcribe speech when necessary, and audit transcript coverage and accuracy.
+3. Prepare transcript-based training, validation, retrieval, agent-development, and untouched final-test partitions. Keep creators separate across partitions.
+4. Train and validate separate engagement predictors for likes, comments, and shares. Compare simple, context-only, and context-plus-transcript models on unseen creators. Do not treat historical correlations as causal evidence.
+5. Build a RAG-based agent that retrieves relevant historical examples and rewrites spoken scripts for each engagement goal; log transformations (including SPICE-related choices).
+6. Compare unchanged originals, fixed-prompt LLM rewrites, and agent revisions using **predicted engagement** and **content fidelity** (central-claim preservation, semantic similarity, contradictions, unsupported additions).
 
-The project studies **model-predicted engagement**, not whether the rewrites actually cause more people to interact with a published post. The initial study is limited to TikTok text, with the primary text field to be selected based on data availability.
+The study evaluates **model predictions**, not actual improvements in engagement following publication. Video scripts represent spoken content only; visuals, on-screen text, audio style, and creator effects remain limitations.
 
-## Research workflow
-
-The planned workflow is:
-
-1. **Collect and validate data** through the authorized TikTok Research API.
-2. **Prepare separate datasets** for engagement-model training, RAG reference examples, development/pilot testing, and final held-out evaluation.
-3. **Train and validate** separate engagement predictors for likes, comments, and shares.
-4. **Build the RAG-based agent** to retrieve relevant historical examples and generate goal-specific revisions.
-5. **Evaluate the outputs** against the original and non-agent LLM baseline using predicted engagement and fidelity measures.
-
-Data access, model performance, and fidelity evaluation must be validated before drawing conclusions from the final comparison.
-
-## Repository structure
+## Repository layout
 
 ```text
+config/
+  collection.json               Query fields, date windows, and pagination settings
 src/
-  pilot.py                  TikTok Research API client and initial data checks
+  api_collection/
+    pilot.py                    Original small-scale API test
+    tiktok_client.py            API authentication, tokens, requests, and retries
+    collect_videos.py           Multi-window collection and JSON/CSV export
+  preprocessing/
+    check_data.py               Quality checks on the newest collection CSV
+    preprocess.py               Provisional caption-based filtering and features
+    make_splits.py              Provisional creator-disjoint caption-based splits
+  transcription/
+    select_video_candidates.py  Video links for manual access/speech checks (no downloads)
+    transcribe_video.py         Whisper transcription of one permitted local file
 docs/
-  data_dictionary.md        Field definitions and intended research uses
-  pilot_notes.md            Pilot query, observations, and limitations
-  pilot_summary.txt         Automatically generated aggregate pilot statistics
-data/
-  raw/                      Raw API responses (not committed)
-  processed/                CSV exports (not committed)
-.env                        Local credentials, if permitted (not committed)
-.gitignore                  Files excluded from Git
-requirements.txt            Python dependencies
-README.md                   Project documentation
+  data_dictionary.md            API field definitions
+  pilot_notes.md                Initial pilot observations
+  preprocessing_report.md       Existing preliminary caption-data quality report
+  split_report.md               Existing preliminary split report
+data/                           PRIVATE; excluded from Git
+  raw/                          Raw Research API JSON responses
+  processed/                    API CSV exports and clean_videos.csv
+  splits/                       Preliminary caption-based partition CSVs
+  videos/                       Locally permitted video/audio files
+  transcripts/                  Transcripts linked by video ID
+.env                            Local authorized credentials (not committed)
+.gitignore                      Excludes private data and credentials
+requirements.txt                Core dependencies
+requirements-transcription.txt  faster-whisper (optional for initial transcription test)
+README.md                       Project documentation
 ```
 
-Additional scripts and components will be added as the project develops.
+`config/`, `data/`, and `docs/` remain at the **repository root**. This change reorganizes only Python code; it does not move any datasets or invalidate existing outputs. All scripts locate the project root from their own file path, so run them from the repository root using the commands below.
 
-## Setup
-
-Use Python 3.11+ and PowerShell from the repository root:
+## Installation (PowerShell, repository root)
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
+# Only if testing local video transcription:
+python -m pip install -r requirements-transcription.txt
 ```
 
-Only use credentials authorized for the approved Research API project. If the lab permits local secret storage, create a `.env` file in the repository root:
+For approved API collection, store project-authorized credentials only in a local, untracked `.env` file:
 
 ```dotenv
-TIKTOK_CLIENT_KEY=your_authorized_client_key
-TIKTOK_CLIENT_SECRET=your_authorized_client_secret
+TIKTOK_CLIENT_KEY=your_authorized_key
+TIKTOK_CLIENT_SECRET=your_authorized_secret
 ```
 
-The script requests a temporary access token automatically. Do **not** commit `.env`, tokens, credentials, or restricted TikTok data.
+Never publish tokens, usernames, raw API responses, video files, transcripts, or row-level records. Confirm lab and TikTok permissions before acquiring videos in bulk or processing material outside the Research API.
 
-## Run the API pilot
-
-Review the `FIELDS` and `QUERY` settings in `src/pilot.py` before running. Use only query parameters approved for the research project.
+## Completed: data collection and initial quality audit
 
 ```powershell
-python src/pilot.py
+python src/api_collection/collect_videos.py
+python src/preprocessing/check_data.py
+python src/preprocessing/preprocess.py
+python src/preprocessing/make_splits.py
 ```
 
-The script authenticates, queries video metadata, handles limited pagination and temporary errors, deduplicates by video ID, and writes:
+The two principal CSV exports are:
 
-- `data/raw/tiktok_pilot.json` — API responses and query metadata
-- `data/processed/tiktok_pilot.csv` — retrieved fields with extraction timestamps
-- `docs/pilot_summary.txt` — record counts, missingness, text coverage, and engagement statistics
+- `data/processed/videos_20261106_031209.csv` — 3,938 records
+- `data/processed/videos_20261106_033158.csv` — 1,376 records
 
-For field descriptions, see [`docs/data_dictionary.md`](docs/data_dictionary.md). For detailed pilot observations, see [`docs/pilot_notes.md`](docs/pilot_notes.md).
+Across 12 selected one-week windows during March–August 2026, **5,314 records** were collected (5,314 distinct video IDs within the two collections). Both have complete primary engagement count fields. Approximately **76–78%** of records had nonempty descriptions, but only **1–2%** had nonempty `voice_to_text` transcripts. Views, likes, comments, and shares were heavily skewed, with many zero-comment and zero-share posts.
 
-## Data handling
+`src/preprocessing/preprocess.py` merges these exports, validates IDs/creators/dates/counts, removes zero-view posts, captions under five words, non-English/undetermined longer captions, and exact duplicate captions, and creates log-count and per-view features. It produced **2,394 posts** from **2,328 creators**. Of those, **880 short captions were not reliably language-classified**.
 
-This project uses research-access data subject to TikTok and university restrictions. Raw posts may contain usernames, contact details, or other identifying information. Do not publish or commit raw data, credentials, or access tokens. Share research data only through channels approved by the lab and the project's permissions. Confirm the query scope and obtain approval before larger-scale collection.
+`src/preprocessing/make_splits.py` deterministically hashes creators into **caption-based** datasets:
 
-## Current status & next steps
+| Dataset | Posts | Intended use |
+|---|---:|---|
+| `model_train.csv` | 1,431 | Training |
+| `model_val.csv` | 225 | Development validation |
+| `rag.csv` | 496 | Retrieval examples |
+| `agent_pilot.csv` | 108 | Agent development |
+| `final_test.csv` | 134 | Held-out comparison |
 
-**Status (October 29, 2026): Initial API pilot completed.**
+**Important:** These were proof-of-pipeline outputs for caption data. They are **not** the final transcript-based splits. The transcript pipeline will need different filtering, and creator-disjoint splits must be regenerated before modeling. Original API exports are preserved.
 
-- Successfully queried **20 unique TikTok videos** across two API pages using a U.S.-region, `education` keyword query for October 1–7, 2026.
-- All 20 returned nonempty `video_description` values and available view, like, comment, and share counts; none returned a nonempty `voice_to_text` transcript.
-- The retrieved posts were concentrated in a short interval on October 7, and engagement was often low (especially shares). These 20 records are a **feasibility test**, not a representative training sample.
-- The pilot script, data dictionary, and pilot notes are complete. The larger data-collection plan has not yet been finalized or approved.
+## Next: transcript feasibility test
 
-**Next steps:** Share the pilot findings and proposed API usage with Professor Yaros; confirm an approved broader sampling plan and availability of creator-level metadata; then evaluate text coverage, missingness, and engagement distributions on a larger approved sample before building the models and agent.
+Use existing video IDs rather than repeating collection. The Research API's `voice_to_text` field reports pre-existing subtitles only where available; the API does not provide a general video-file download endpoint. Test one permitted spoken video before designing any large-scale acquisition method.
 
-*Update this section as the project progresses; keep the methodology, setup, and usage instructions above as stable reference information.*
+**1. Print candidate video links (no video download):**
 
-## Official documentation
+```powershell
+python src/transcription/select_video_candidates.py
+```
 
-- [TikTok Research Tools](https://developers.tiktok.com/products/research-api/)
-- [Research API — Getting Started](https://developers.tiktok.com/docs/en/research-api-get-started)
-- [Research API — Query Videos](https://developers.tiktok.com/docs/en/research-api-specs-query-videos)
+Open a candidate in TikTok; check that it is accessible, substantially spoken, and has a creator-enabled **Save video** option. Follow the applicable research permissions. Do not bypass blocked downloads. Put one permitted file at `data/videos/<video_id>.mp4` (create that folder if needed).
+
+**2. Transcribe the downloaded file:**
+
+```powershell
+python -m pip install -r requirements-transcription.txt
+python src/transcription/transcribe_video.py data/videos/VIDEO_ID.mp4 --video-id VIDEO_ID
+```
+
+Replace `VIDEO_ID` with the numeric TikTok ID. For this first test, `src/transcription/transcribe_video.py` uses the Whisper `base` model on CPU and writes `data/transcripts/transcripts.csv`. It does **not** download videos or contact TikTok. The model may download its weights on first use. Inspect the output against the original audio: check if it contains meaningful English speech, whether claims are accurately captured, and whether visuals/on-screen text provide essential missing context.
+
+**3. Establish whether collection can scale legally and practically.** Check with the lab about an already-authorized media archive, transcripts, or a permitted batch access workflow. A single successful transcription proves the *technical* step, not large-scale dataset availability.
+
+After sufficient transcripts are available: join by `id` to the existing metadata, audit speech and text quality, update preprocessing and creator-disjoint splits for transcripts, then train engagement prediction baselines.
+
+## Validity, privacy, and limits
+
+- Engagement is observational; predicted changes are not evidence that a script rewrite will cause more likes, comments, or shares.
+- Engagement depends on many unobserved factors, particularly video visuals, creator reputation, and distribution. Validate whether **transcript features** add predictive value over nontext context features.
+- The sample covers selected US-region windows, not all TikTok videos; pagination and month distributions are uneven.
+- Transcription may fail on music-only, silent, multi-speaker, multilingual, or low-quality audio. Speech transcripts omit visual and on-screen content.
+- Avoid train/test leakage: use creator-disjoint partitions; reserve final evaluation data; evaluate against simple baselines and disclose model failures.
+- Keep downloaded media, transcripts, account identifiers, and post-level data private and within research authorization.
+
+## Documentation
+
+- [TikTok Research API — Query Videos](https://developers.tiktok.com/docs/en/research-api-specs-query-videos)
+- [TikTok Research API Codebook](https://developers.tiktok.com/docs/en/research-api-codebook)
+- [TikTok video downloads](https://support.tiktok.com/en/using-tiktok/exploring-videos/video-downloads)
+- [faster-whisper](https://github.com/SYSTRAN/faster-whisper)

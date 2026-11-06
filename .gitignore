@@ -7,15 +7,15 @@ venv/
 __pycache__/
 *.py[cod]
 
-# Research data
-data/raw/
-data/processed/
-data/**/*.csv
-data/**/*.json
+# Private research data: raw responses, posts, transcripts, and videos
+# Keep all row-level data, including video and audio files, out of Git.
+data/
 
-# Logs and local tooling
+# Potentially sensitive debugging output
 logs/
 *.log
+
+# Local tooling
 .vscode/
 .idea/
 .ipynb_checkpoints/

@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(ROOT / '.env')
 key = os.getenv('TIKTOK_CLIENT_KEY')
 secret = os.getenv('TIKTOK_CLIENT_SECRET')
